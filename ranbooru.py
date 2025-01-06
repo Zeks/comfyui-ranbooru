@@ -74,10 +74,16 @@ class Rule34(Booru):
     def get_data(self, add_tags, max_pages,id=''):
         if id:
             add_tags = ''
-        self.booru_url = f"{self.booru_url}&pid={random.randint(0,max_pages)}{id}{add_tags}"
-        res = requests.get(self.booru_url)
-        data = res.json()
-        return {'post': data}
+        
+        for attempt in range(6):
+            url = self.booru_url
+            url = f"{url}&pid={random.randint(0,max_pages)}{add_tags}"
+            res = requests.get(url)
+            data = res.json()
+            if isinstance(data, list) and len(data) > 0:
+                return {'post': data}
+            max_pages=int(max_pages/2)
+            print("no data found, trying with page range:", max_pages)
     
     def get_post(self, add_tags, max_pages, id=''):
         return self.get_data(add_tags, max_pages, "&id="+id)
