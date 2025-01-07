@@ -77,10 +77,11 @@ class Rule34(Booru):
         
         for attempt in range(6):
             url = self.booru_url
-            url = f"{url}&pid={random.randint(0,max_pages)}{add_tags}"
+            post_id = random.randint(0,max_pages)
+            url = f"{url}&pid={post_id}{add_tags}"
             res = requests.get(url)
             data = res.json()
-            if isinstance(data, list) and len(data) > 0:
+            if len(data) > 0:
                 return {'post': data}
             max_pages=int(max_pages/2)
             print("no data found, trying with page range:", max_pages)
@@ -308,9 +309,11 @@ class Ranbooru:
                 temp_tags.extend(BW_BG)
             final_tags = ','.join([tag for tag in temp_tags if tag not in bad_tags])
             self.last_prompt = final_tags
-            self.file_url = random_post['file_url']
             print(api_url.booru_url)
-            print(self.file_url)
+            if 'file_url' in random_post:
+                print("this will execute")
+                self.file_url = random_post['file_url']
+                print(self.file_url)
 
         if return_picture:
             if use_last_prompt:
