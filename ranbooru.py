@@ -165,11 +165,18 @@ class Danbooru(Booru):
     def get_data(self, add_tags, max_pages, id=''):
         if id:
             add_tags = ''
-        self.booru_url = f"{self.booru_url}&page={random.randint(0,max_pages)}{id}{add_tags}"
-        res = requests.get(self.booru_url, headers=self.headers)
-        data = res.json()
-        for post in data:
-            post['tags'] = post['tag_string']
+        
+        for attempt in range(12):
+            url = f"{self.booru_url}&page={random.randint(0,max_pages)}{add_tags}"
+            res = requests.get(url, headers=self.headers)
+            data = res.json()
+            if len(data) > 0:
+                for post in data:
+                    post['tags'] = post['tag_string']
+                return {'post': data}
+            max_pages=int(max_pages/2)
+            print("no data found, trying with page range:", max_pages)
+
         return {'post': data}
     
     def get_post(self, add_tags, max_pages, id=''):
@@ -291,13 +298,16 @@ class Ranbooru:
             
             add_tags = ''
             if tags != '':
-                add_tags = f'&tags=-animated+{tags.replace(",", "+")}'
-            else:
-                add_tags = '&tags=-animated'
+                add_tags = f'&tags={tags.replace(",", "+")}'
+            
             if rating != 'All':
                 add_tags += f'+rating:{RATINGS[booru][rating]}'
             data = api_url.get_data(add_tags, max_pages)
-            random_post = data['post'][random.randint(0,len(data['post'])-1)]
+            if len(data['post']) > 0:
+                random_post = data['post'][random.randint(0,len(data['post'])-1)]
+            else:
+                random_post = {'tags': 'bad_post_fix'}
+                
             clean_tags = random_post['tags'].replace('(','\(').replace(')','\)')
             temp_tags = clean_tags.split(' ')
             temp_tags = random.sample(temp_tags, len(temp_tags))
